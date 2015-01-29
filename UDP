@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"time"
+	"net"
+)
+
+
+func main(){
+
+	// ch := make(chan string)
+
+	go UDPListen()
+
+	for {
+		Sender()
+	}
+}
+
+
+
+//Sender:
+func Sender(){
+	addr, _ := net.ResolveUDPAddr("udp", "129.241.187.136:20016")
+	sock, _ := net.DialUDP("udp", nil, addr)
+
+	a := "Message"
+	b := make([]byte, 1024)
+	copy(b[:], a)
+
+	for {
+		_, err := sock.Write(b)
+		if err != nil {
+			continue
+		}
+		time.Sleep(1000000000)
+	}
+}
+
+
+
+
+//Receiver:
+func UDPListen() {
+	addr, _ := net.ResolveUDPAddr("udp", ":20016")
+	listener, _ := net.ListenUDP("udp", addr)
+
+	for {
+		buffer := make([]byte, 1024)
+		_, _, err := listener.ReadFromUDP(buffer)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Println(string(buffer))
+	}
+}
