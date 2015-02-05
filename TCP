@@ -23,9 +23,12 @@ func Sender(){
 	sock, _ := net.DialTCP("tcp", nil, tcpAddr)
 	
 	go Listen(sock)
+	
+	a := "hoho\x00";
+	b := []byte(a);
 
 	for {
-		_, err := sock.Write([]byte("hoho\x00"))
+		_, err := sock.Write(b)
 		if err != nil {
 			continue
 		}
