@@ -3,73 +3,47 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 func main(){
 	
 	ch := make(chan string)
 	
-	go Listen()
 	for {
 		Sender()
 	}
-	
 	<- ch
 }
 
 
 //Sender:
 func Sender(){
-	tcpAddr, _ := net.ResolveTCPAddr ("ip4", "129.241.187.136:34933")
+	tcpAddr, _ := net.ResolveTCPAddr ("tcp", "129.241.187.136:34933")
 	sock, _ := net.DialTCP("tcp", nil, tcpAddr)
 	
-	a := "HEY HO!"
-	b := make([]byte, 1024)
-	copy(b[:], a)
+	go Listen(sock)
 
 	for {
-		_, err := sock.Write(b)
+		_, err := sock.Write([]byte("hoho\x00"))
 		if err != nil {
 			continue
 		}
+		time.Sleep(1*time.Second)
 	}
 }
 
 
 
 //Receiver:
-func Listen() {
-	tcpAddr, _ := net.ResolveTCPAddr ("ip4", ":34933")
-	listener, _ := net.ListenTCP("tcp", tcpAddr)
-
+func Listen(sock *net.TCPConn) {
 	for {
-		conn, err := listener.Accept()
+		buff := make([]byte, 1024)
+		_, err := sock.Read(buff[0:])
+		fmt.Println(string(buff))
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
-		handleClient(conn)
-		//conn.Close()
 	}
 }
-
-
-func handleClient(conn net.Conn) {
-	buffer := make([]byte, 1024)
-	for {
-		n, err := conn.Read(buffer[0:])
-		if err != nil {
-			return
-		}
-		
-		_, err2 := conn.Write(buffer[0:n])
-		if err2 != nil {
-			return
-		}
-		
-		fmt.Println(string(buffer))
-	}
-}
-
-
 
