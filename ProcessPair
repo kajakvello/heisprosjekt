@@ -1,0 +1,68 @@
+package main
+
+import (
+	."fmt"
+	"time"
+	"net"
+	"os/exec"
+	"strconv"
+)
+
+
+func main(){
+	
+	i := SlaveListen()	
+
+	newProg := exec.Command("gnome-terminal", "-x", "sh", "-c", "go run ProcessPair.go")
+	newProg.Run()
+	
+	Println("Hei fra Master!")
+	
+	MasterWrite(i)
+
+}
+
+
+
+//Sender:
+func MasterWrite(i int){
+	addr, _ := net.ResolveUDPAddr("udp", "129.241.187.255:20016")
+	sock, _ := net.DialUDP("udp", nil, addr)
+
+	for {
+		sock.Write([]byte(strconv.Itoa(i)))
+		Println(i)
+		i++
+		time.Sleep(time.Millisecond*200)
+	}
+}
+
+
+
+
+//Receiver:
+func SlaveListen() int {
+	addr, _ := net.ResolveUDPAddr("udp", ":20016")
+	listener, err := net.ListenUDP("udp", addr)
+	Println(err)
+
+	Println("Listening to UDP")
+	var i int
+
+	for {
+		buffer := make([]byte, 1024)
+		
+		listener.SetReadDeadline(time.Now().Add(1000*time.Millisecond))
+		nbytes, addr, err := listener.ReadFromUDP(buffer)
+		if err != nil {
+			Println("ReadFromUdp err:", err)
+			if addr == nil {
+				listener.Close()
+				return i
+			}
+		} else {
+			i, _ = strconv.Atoi(string(buffer[0:nbytes]))
+		}
+	}
+	return 0
+}
