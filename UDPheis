@@ -1,0 +1,156 @@
+package main
+
+import(
+	."fmt"
+	"net"
+	"time"
+	"strings"
+	"strconv"
+)
+
+func main(){
+
+	//Initialisering
+	exit := make(chan string)
+	
+	go UDPSend(exit)
+	
+	var state string
+	addrVec := make([]int, 0)
+	
+	//state, addrVec = initNetwork()
+	
+	exit <- "Init done!"
+	
+	
+	
+	
+	//Set state functions
+	if state == "Master" {
+		_ = addrVec
+		Println("Jeg er master")
+	
+	} else if state == "Slave" {
+		Println("Jeg er slave")
+		
+	} else {
+		Println("Ugler i mosen! :( ")
+	}
+
+}
+
+
+//Determines master-slave relationship in network
+func initNetwork() (string, []int) {
+	
+	addrVec := make([]int, 0)
+	shouldAppend := true
+	var min int
+	
+	addrString, _ := net.InterfaceAddrs()
+	selfAddr := getIPnumber(addrString[1])
+	addrVec = append(addrVec, selfAddr)
+	
+	//Receives IP-addresses for all elevators	
+	for len(addrVec) < 3 {
+	
+		addr := UDPListen()
+		IP := getIPnumber(addr)
+		
+		if IP != 0 {
+			
+			for i:=0; i < len(addrVec); i++{
+				if IP == addrVec[i] {
+					shouldAppend = false
+					break
+				}
+			}
+			
+			if shouldAppend {
+				addrVec = append(addrVec, IP)
+			}		
+		}
+	}
+	
+	
+	//Elevator with lowest IP value becomes master
+	min = selfAddr
+	for i:=0; i<len(addrVec); i++ {
+		if addrVec[i] < min {
+			min = addrVec[i]
+		}
+	}
+	
+	if selfAddr == min {
+		return "Master", addrVec
+	}
+	
+	return "Slave", addrVec
+}
+
+
+func getIPnumber(addr net.Addr) int {
+	
+	IPvec := strings.Split(addr.String(), ".")
+	IP := IPvec[3]
+	IPport := strings.Split(IP, ":")
+	IP = IPport[0]
+	IPint, _ := strconv.Atoi(IP)
+	
+	return IPint
+}
+
+
+// Skal denne bare sende alt som kommer på channel??
+func UDPSend (exit chan string) {
+
+	addr, _ := net.ResolveUDPAddr("udp", "129.241.187.255:20016")
+	sock, _ := net.DialUDP("udp", nil, addr)
+	
+	a := "I'm here"
+	b := make([]byte, 1024)
+	copy(b[:], a)
+	
+	for {
+		if exit != nil {
+			break
+		}
+		_, err := sock.Write(b)
+		if err != nil {
+			continue
+		}
+		time.Sleep(time.Millisecond*500)
+	}
+}
+
+
+
+func UDPListen() net.Addr {
+	addr, _ := net.ResolveUDPAddr("udp", ":20016")
+	listener, _ := net.ListenUDP("udp", addr)
+
+	for {
+		buffer := make([]byte, 1024)
+		
+		//listener.SetReadDeadline(time.Now().Add(1000*time.Millisecond))
+		_, addr, err := listener.ReadFromUDP(buffer)
+		if err != nil {
+		/*	
+			if addr == nil {
+				listener.Close()
+				//return
+			}
+		*/
+			Println("ReadFromUDP err:", err)
+		
+		} else if buffer != nil {
+			return addr
+			
+		} else {
+			continue
+		}
+	}
+}
+
+
+
