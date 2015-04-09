@@ -1,0 +1,58 @@
+package elevFunc
+
+type Order struct {
+
+	NewOrder bool
+	OrderFromFloor int
+	OrderDirection int // 1 = UP, 0 = DOWN
+	Cost int // -1 = No new order
+	OrderHandledAtFloor int // -1 = No order handled
+	
+}
+
+//TODO??: Gjøres skalerbar for #Floors
+func NewOrder(orderList *[]bool, newOrder Order){
+	
+	switch newOrder.OrderFromFloor {
+	case 1:
+		(*orderList)[0] = true
+		
+	case 2:
+		if newOrder.OrderDirection == 1 {
+			(*orderList)[1] = true
+		} else if newOrder.ORderDirection == 0 {
+			(*orderList)[3] = true
+		}
+	
+	case 3:
+		if newOrder.OrderDirection == 1 {
+			(*orderList)[2] = true
+		} else if newOrder.ORderDirection == 0 {
+			(*orderList)[4] = true
+		}
+	
+	case 4:
+		(*orderList)[5] = true
+	}
+}
+
+
+//TODO??: Gjøres skalerbar for #Floors
+func OrderHandled(orderList *[]bool, HandledOrder Order){
+	
+	switch newOrder.OrderHandledAtFloor {
+	case 1:
+		(*orderList)[0] = false
+		
+	case 2:
+		(*orderList)[1] = false
+		(*orderList)[3] = false
+	
+	case 3:
+		(*orderList)[2] = false
+		(*orderList)[4] = false
+	
+	case 4:
+		(*orderList)[5] = false
+	}
+}  
