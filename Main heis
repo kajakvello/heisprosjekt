@@ -1,0 +1,23 @@
+package main
+
+import(
+	"udp"
+	."fmt"
+	"net"
+	"time"
+	"strings"
+	"strconv"
+)
+
+
+func main(){	
+
+	localPort := 20017
+	broadcastPort := 20016
+	
+	orderList := make[6]  //0 = 1.etg opp, 1 = 2.etg opp, 2 = 3.etg opp, 3 = 2.etg ned, 4 = 3.etg ned, 5 = 4.etg ned
+	
+	
+
+
+}
