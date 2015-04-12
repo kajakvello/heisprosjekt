@@ -2,6 +2,9 @@ package main
 
 import(
 	"udp"
+	"driver"
+	"elevFunc"
+	"timer"
 	."fmt"
 	"net"
 	"time"
@@ -9,15 +12,46 @@ import(
 	"strconv"
 )
 
+var localPort := 20017;
+var broadcastPort := 20016;
+
 
 func main(){	
-
-	localPort := 20017
-	broadcastPort := 20016
 	
-	orderList := make[6]  //0 = 1.etg opp, 1 = 2.etg opp, 2 = 3.etg opp, 3 = 2.etg ned, 4 = 3.etg ned, 5 = 4.etg ned
+	//Initialiser heis
+	Init()
 	
 	
+	Lytter hele tiden etter newOrder
+	Mottar newOrder på egen heis
+		om bestillingen er i samme etg som heisen er, ta bestillingen selv
+		ellers:
+			sender order, men kost til de andre heisene
+			om ikke mottatt svar etter 1 sec, ta bestillingen selv
+			om mottar svar fra annen heis, ikke ta bestillingen
+	Mottar newOrder fra annen heis
+		Sjekker sin egen kost opp mot den andres cost
+		Sender svar tilbake dersom lavere kost
+	
+	for {
+		go checkButtonCallUp()
+		go checkButtonCallDown()
+		go checkButtonCommand()
+		go updateFloor()
+		go receiveOrder()
+		//go checklastfloor()????
+		//go checktimer()????
+	}
+	
+
+	
+	elev_set_speed(0)
+}
 
 
+
+
+
+func updateFloor() {
+	floor = elev_get_floor_sensor_signal()
 }
