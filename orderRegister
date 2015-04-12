@@ -1,0 +1,101 @@
+package orderRegister
+
+import (
+	
+)
+
+//TROOOOR DISSE MÅ VÆRE HER??
+//Init OrderList, USIKKER PÅ OM DENNE SKAL VÆRE I MAIN ELLER ELEVFUNC????
+//0 = 1.etg opp, 1 = 2.etg opp, 2 = 3.etg opp, 3 = 2.etg ned, 4 = 3.etg ned, 5 = 4.etg ned
+var OrderList [N_FLOORS*2-2]bool
+for j:=0; j<N_FLOORS*2-2; j++ {
+	OrderList[j] = false
+}
+
+//Lager liste for bestillinger i heisen
+var Inside [N_FLOORS]bool
+for j:=0; j<N_FLOORS; j++ {
+	Inside[j] = false
+}
+
+
+
+//TODO??: Gjøres skalerbar for #Floors
+func SetOrder(orderList *[]bool, newOrder Order){
+	
+	switch newOrder.OrderFromFloor {
+	case 1:
+		(*orderList)[0] = true
+		
+	case 2:
+		if newOrder.OrderDirection == 1 {
+			(*orderList)[1] = true
+		} else if newOrder.ORderDirection == 0 {
+			(*orderList)[3] = true
+		}
+	
+	case 3:
+		if newOrder.OrderDirection == 1 {
+			(*orderList)[2] = true
+		} else if newOrder.OrderDirection == 0 {
+			(*orderList)[4] = true
+		}
+	
+	case 4:
+		(*orderList)[5] = true
+	}
+}
+
+
+
+
+//TODO??: Gjøres skalerbar for #Floors
+func deleteOrdersOnFloor(orderList *[]bool, handledOrder Order){
+
+	SendOrder(handledOrder)
+	
+	switch handledOrder.OrderHandledAtFloor {
+	case 1:
+		(*orderList)[0] = false
+		
+	case 2:
+		(*orderList)[1] = false
+		(*orderList)[3] = false
+	
+	case 3:
+		(*orderList)[2] = false
+		(*orderList)[4] = false
+	
+	case 4:
+		(*orderList)[5] = false
+	}
+}
+
+
+
+
+
+func DeleteAllOrders(orderList *[]bool) {
+
+	//Sende delete all orders til andre heiser, eller brukes denne kun ved init?	
+		
+	for i:=0; i<N_FLOORS*2-2; i++ {
+		orderList[i] = false
+	}
+	//Også fjerne bestilliger inni heisen, eller har vi ikke noe køsystem på det?
+}
+
+
+
+//Ve-el-dig usikker, shalalalala, ve-el-dig usikker shaaaa-la-la-la-la-la!
+func getOrder(direction int, floor int) bool {
+	
+	if (Inside[floor] == true) {return true}
+	
+	if (
+	
+	
+	return false
+}
+
+
