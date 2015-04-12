@@ -1,5 +1,19 @@
 package elevFunc
 
+import (
+	"orderRegister"
+	"driver"
+	"timer"
+	."time"
+)
+
+var floor := -1;
+var last_floor := 0;
+var direction := -1;	// -1 = står i ro, 1 = opp, 0 = ned
+var doorOpen := false;	//Usikker på om den trengs
+
+
+
 type Order struct {
 
 	NewOrder bool
@@ -10,49 +24,199 @@ type Order struct {
 	
 }
 
-//TODO??: Gjøres skalerbar for #Floors
-func NewOrder(orderList *[]bool, newOrder Order){
+
+
+//Elevfunc skal ha initfunksjon, alle elevfunksjoner og de fleste variabler, troooor jeg
+
+func Init() {
+
+	elev_init()		//Fra driver.go
+	DeleteAllOrders(orderList)
+	for (elev_get_floor_sensor_signal() != 0) {
+		elev_set_speed (-300)
+	}
+	elev_set_speed(50)
+	Sleep(20000*Microsecond)
+	elev_set_speed(0)
+	direction = -1
+	lastFloor = -1
+	doorOpen = false
+}
+
+
+
+
+func floorReached(floor int) {
+	last_floor = floor
+	elev_set_floor_indicator(floor)		//set light on floor
 	
-	switch newOrder.OrderFromFloor {
-	case 1:
-		(*orderList)[0] = true
-		
-	case 2:
-		if newOrder.OrderDirection == 1 {
-			(*orderList)[1] = true
-		} else if newOrder.ORderDirection == 0 {
-			(*orderList)[3] = true
+	if (getOrder(direction, floor) {
+		if (direction == 1) {
+			elev_set_speed(100)
+		} if (direction == 0) {
+			elev_set_speed(-100)
 		}
-	
-	case 3:
-		if newOrder.OrderDirection == 1 {
-			(*orderList)[2] = true
-		} else if newOrder.ORderDirection == 0 {
-			(*orderList)[4] = true
-		}
-	
-	case 4:
-		(*orderList)[5] = true
+		Sleep(20000*Microsecond)
+		elev_set_speed(0)
+		elev_set_door_open_lamp(1)
+		doorOpen(true)
+		setTimer()
+	} else if (floor == 0) {			//Stops, so the elevator do not pass 1. floor
+		elev_set_speed(100)
+		Sleep(20000*Microsecond)
+		elev_set_speed(0)
+		direction = 0
+	} else if (floor == 3) {			//Stops, so the elevator do not pass 4. floor
+		elev_set_speed(-100)
+		Sleep(20000*Microsecond)
+		elev_set_speed(0)
+		direction = 1
 	}
 }
 
 
-//TODO??: Gjøres skalerbar for #Floors
-func OrderHandled(orderList *[]bool, HandledOrder Order){
-	
-	switch newOrder.OrderHandledAtFloor {
-	case 1:
-		(*orderList)[0] = false
-		
-	case 2:
-		(*orderList)[1] = false
-		(*orderList)[3] = false
-	
-	case 3:
-		(*orderList)[2] = false
-		(*orderList)[4] = false
-	
-	case 4:
-		(*orderList)[5] = false
+
+
+func timerOut() {
+
+	if (elev_get_floor_sensor_signal() == last_floor) {
+		deleteOrdersOnFloor(last_floor)
 	}
-}  
+	
+	//Usikker her!!
+	
+	runElevator()
+}
+
+
+
+
+func runElevator() {
+	if (doorOpen) {
+		return
+	} 
+	
+	if (emptyQueue()) {
+		direction = -1
+		
+	} else {
+	
+		if (direction == 0) {
+			elev_set_speed(300)
+		} else if (direction ==1) {
+			elev_set_speed(-300)
+		}
+	}
+}
+
+
+
+//Calculates cost
+func getCost(floor, orderFloor, direction, last_floor) int {
+	cost := //KOSTFUNKSJON
+	return cost
+}
+
+
+
+
+func SendOrder(order Order) {
+
+	b, err := json.Marshal(order)
+	
+	if (err != nil) {
+		println("Send Order Error: ", err)
+	}
+	
+	exit := make(chan string)
+	go UDPSend(exit, b)
+	exit <- "message sent!"	
+}
+
+
+
+
+//Receives orders from other elevators
+func ReceiveOrder() Order {
+	
+	b := UDPListen()
+	
+	var received_order Order
+	err := json.Unmarshal(b, &received_order)
+	
+	if (err != nil) {
+		println("Receive Order Error: ", err)
+		return nil
+	} else {
+		return received_order
+	}
+}
+
+
+
+
+
+
+
+//Registers if any up-buttons is pushed
+func checkButtonCallUp() {
+
+	for (i:=0; i<N_FLOORS-1; i++) {
+		if (elev_get_button_signal(BUTTON_CALL_UP, i)) {
+			
+			if (direction == -1 && floor == i) {
+				//Ta order selv
+				elev_set_door_open_lamp(1)
+				setTimer() 							//lage timer??
+			} else {
+				//Regn ut egen cost og send newOrder
+				cost := getCost(floor, i, direction, last_floor)
+				newOrder := Order{true, i, 1, cost, -1}
+				SetOrder(OrderList, newOrder)
+				go SendOrder(newOrder)
+				//Set en timer som hører etter svar, ta bestillingen selv om ingen svar etter timer går ut.
+			}
+		}
+	}
+}
+
+
+
+
+//Registers if any down-buttons is pushed
+func checkButtonCallDown() {
+
+	for (i:=1; i<=N_FLOORS; i++) {
+		if (elev_get_button_signal(BUTTON_CALL_DOWN, i)) {
+			
+			if (direction == -1 && floor == i) {
+				//Ta order selv
+				elev_set_door_open_lamp(1)
+				setTimer() 							//lage timer??
+			} else {
+				//Regn ut egen cost og send newOrder
+				cost := getCost(floor, i, direction, last_floor)
+				newOrder := Order{true, i, 0, cost, -1}
+				SetNewOrder(OrderList, newOrder)
+				go SendOrder(newOrder)
+				//Set en timer som hører etter svar, ta bestillingen selv om ingen svar etter timer går ut.
+			}
+		}
+	}
+}
+
+
+//Registers if any command-buttons is pushed
+func checkButtonCommand() {
+	for (i:=0; i<4; i++) {
+		if (elev_get_button_signal(BUTTON_COMMAND, i)) {
+			if (direction == -1 && floor == i) {
+				elev_set_door_open_lamp(1)
+				setTimer()
+			} else {
+				//Lage køsystem på samme måte som i fjor?
+			}
+		}
+	}
+}
+
