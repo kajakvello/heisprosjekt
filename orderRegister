@@ -1,101 +1,162 @@
 package orderRegister
 
 import (
-	
+	"driver"
 )
+
+
+type Order struct {
+
+	MyFloor int
+	MyDirection int
+	//Order:
+	Floor int
+	Direction int // 1 = UP, 0 = DOWN, -1 = INSIDE
+	OrderHandledAtFloor bool 
+	
+}
+
 
 //TROOOOR DISSE MÅ VÆRE HER??
 //Init OrderList, USIKKER PÅ OM DENNE SKAL VÆRE I MAIN ELLER ELEVFUNC????
 //0 = 1.etg opp, 1 = 2.etg opp, 2 = 3.etg opp, 3 = 2.etg ned, 4 = 3.etg ned, 5 = 4.etg ned
-var OrderList [N_FLOORS*2-2]bool
+var globalOrders [N_FLOORS*2-2]bool
 for j:=0; j<N_FLOORS*2-2; j++ {
-	OrderList[j] = false
-}
+	globalOrders[j] = false
+}//Alle bestillinger for alle heiser. Må sjekkes jevnlig at bestillinger blir ekspedert. Aner ikke hvordan, shalalalala, aner ikke hvordan shaaa-la-la-la-la-la!
 
-//Lager liste for bestillinger i heisen
-var Inside [N_FLOORS]bool
+
+// My inside orders
+var inside [N_FLOORS]bool
 for j:=0; j<N_FLOORS; j++ {
-	Inside[j] = false
+	inside[j] = false
+}
+
+// My up orders
+var up [N_FLOORS]bool
+for j:=0; j<N_FLOORS; j++ {
+	up[j] = false
+}
+
+// My down orders
+var down [N_FLOORS]bool
+for j:=0; j<N_FLOORS; j++ {
+	down[j] = false
 }
 
 
 
-//TODO??: Gjøres skalerbar for #Floors
-func SetOrder(orderList *[]bool, newOrder Order){
+
+
+// Update my orders
+func UpdateMyOrders(receivedOrder Order) {
+
+	if receivedOrder.OrderHandeledAtFloor {
 	
-	switch newOrder.OrderFromFloor {
-	case 1:
-		(*orderList)[0] = true
+		inside[receivedOrder.Floor] = false
+		up[receivedOrder.Floor] = false
+		down[receivedOrder.Floor] = false
 		
-	case 2:
-		if newOrder.OrderDirection == 1 {
-			(*orderList)[1] = true
-		} else if newOrder.ORderDirection == 0 {
-			(*orderList)[3] = true
+		SendOrder(receivedOrder)
+		elev_set_button_lamp(BUTTON_CALL_UP, receivedOrder.OrderHandledAtFloor, 0)
+		elev_set_button_lamp(BUTTON_CALL_DOWN, receivedOrder.OrderHandledAtFloor, 0)
+		elev_set_button_lamp(BUTTON_COMMAND, receivedOrder.OrderHandledAtFloor, 0)
+		
+	} else {
+	
+		if receivedOrder.Direction = 0 {
+			down[receivedOrder.Floor] = true
+		} else if receivedOrder.Direction = 1 {
+			up[receivedOrder.Floor] = true
+		} else if receivedOrder.Direction = -1 {
+			inside[receivedOrder.Floor] = true
+		} else {
+			println("Not valid direction, or unvalid floor")
 		}
+		
+	}
+}
+
+
+
+
+// Runs everytime the program receives a new order
+func UpdateGlobalOrders(receivedOrder Order) {
+
+	if receivedOrder.OrderHandeledAtFloor {
 	
-	case 3:
-		if newOrder.OrderDirection == 1 {
-			(*orderList)[2] = true
-		} else if newOrder.OrderDirection == 0 {
-			(*orderList)[4] = true
+		globalOrders[receivedOrder.Floor] = false
+		globalOrders[N_FLOORS-2 + receivedOrder.Floor] = false
+		
+		elev_set_button_lamp(BUTTON_CALL_UP, receivedOrder.OrderHandledAtFloor, 0)
+		elev_set_button_lamp(BUTTON_CALL_DOWN, receivedOrder.OrderHandledAtFloor, 0)
+		
+	} else {
+	
+		if receivedOrder.Direction = 1 {
+			globalOrders[receivedOrder.Floor] = true
+		} else if receivedOrder.Direction = 0 {
+			globalOrders[N_FLOORS-2 + receivedOrder.Floor] = true
+		} else {
+			println("Not valid direction, or unvalid floor")
 		}
-	
-	case 4:
-		(*orderList)[5] = true
-	}
-}
-
-
-
-
-//TODO??: Gjøres skalerbar for #Floors
-func deleteOrdersOnFloor(orderList *[]bool, handledOrder Order){
-
-	SendOrder(handledOrder)
-	
-	switch handledOrder.OrderHandledAtFloor {
-	case 1:
-		(*orderList)[0] = false
 		
-	case 2:
-		(*orderList)[1] = false
-		(*orderList)[3] = false
-	
-	case 3:
-		(*orderList)[2] = false
-		(*orderList)[4] = false
-	
-	case 4:
-		(*orderList)[5] = false
 	}
 }
 
 
 
-
-
-func DeleteAllOrders(orderList *[]bool) {
-
-	//Sende delete all orders til andre heiser, eller brukes denne kun ved init?	
-		
-	for i:=0; i<N_FLOORS*2-2; i++ {
-		orderList[i] = false
-	}
-	//Også fjerne bestilliger inni heisen, eller har vi ikke noe køsystem på det?
-}
-
-
-
-//Ve-el-dig usikker, shalalalala, ve-el-dig usikker shaaaa-la-la-la-la-la!
+// Returns true if the elevator should take an order from "floor". If it exists an order in the same direction as the elevator is headed.
 func getOrder(direction int, floor int) bool {
-	
-	if (Inside[floor] == true) {return true}
-	
-	if (
-	
-	
+
+	if (inside[floor] == true) {
+		return true
+	}
+	if ( up[floor] == true && (direction == 0 || direction == -1 || floor == 0 || !checkOrdersUnderFloor(floor)) ) {
+		return true
+	}
+	if ( down[floor] == true && (direction == 1 || direction == -1 || floor == 3 || !checkOrdersAboveFloor(floor)) ) {
+		return true
+	}
 	return false
 }
+
+
+
+
+func checkOrdersUnderFloor(floor int) bool {
+	for i:=0; i<floor; i++ {
+		if (up[i] || down[i] || inside[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+
+
+
+func checkOrdersAboveFloor(floor int) bool {
+	for i:=floor+1; i<N_FLOORS; i++ {
+		if (up[i] || down[i] || inside[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+
+
+
+func emptyQueue() {
+	for i:=0; i<N_FLOORS; i++ {
+		if (up[i] || down[i] || inside[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+
 
 
