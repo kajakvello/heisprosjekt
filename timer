@@ -1,12 +1,13 @@
-package timer
+package Elevator
+
+/*
 
 import(
-	."fmt"
 	."time"
 )
 
-var timerSet := false;			//Saves the time when timer is turned on
-var startTime := 0;				//Says if the timer is turned on or not
+var timerSet = false			//Says if the timer is turned on or not
+var startTime Time				//Saves the time when timer is turned on
 
 
 //Sets timer
@@ -25,3 +26,4 @@ func checkTimer() bool {
 	}
 	return false
 }
+*/
