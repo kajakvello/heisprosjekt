@@ -1,57 +1,58 @@
 package main
 
 import(
-	"udp"
-	"driver"
-	"elevFunc"
-	"timer"
-	."fmt"
-	"net"
-	"time"
-	"strings"
-	"strconv"
+	
+	//. "./udp"
+	//."./Driver"
+	. "./Elevator"
+	//. "./orderRegister"
+	//"timer"
+	//."fmt"
+	//"net"
+	//"time"
+	//"strings"
+	//"strconv"
 )
 
-var localPort := 20017;
-var broadcastPort := 20016;
+const localPort = 20016
+const broadcastPort = 20017
+const message_size = 1024
 
+var exit chan bool
 
 func main(){	
 	
 	//Initialiser heis
-	Init()
+	Init(localPort, broadcastPort, message_size)
 	
+	/*
 	
 	Lytter hele tiden etter newOrder
 	Mottar newOrder på egen heis
 		om bestillingen er i samme etg som heisen er, ta bestillingen selv
 		ellers:
-			sender order, men kost til de andre heisene
+			sender order, med kost til de andre heisene
 			om ikke mottatt svar etter 1 sec, ta bestillingen selv
 			om mottar svar fra annen heis, ikke ta bestillingen
 	Mottar newOrder fra annen heis
 		Sjekker sin egen kost opp mot den andres cost
 		Sender svar tilbake dersom lavere kost
 	
-	for {
-		go checkButtonCallUp()
-		go checkButtonCallDown()
-		go checkButtonCommand()
-		go updateFloor()
-		go receiveOrder()
-		//go checklastfloor()????
-		//go checktimer()????
-	}
+	*/
 	
-
+	//TODO: go inni for eller for inni go?
 	
-	elev_set_speed(0)
-}
-
-
-
-
-
-func updateFloor() {
-	floor = elev_get_floor_sensor_signal()
+	go CheckButtonCallUp()
+	go CheckButtonCallDown()
+	go CheckButtonCommand()
+	go UpdateFloor()
+	
+	<- exit
+	//go ReceiveOrder()
+	//go RunElevator()
+	
+	//go checklastfloor()????
+	//go checktimer()????
+	
+	//Elev_set_motor_direction(0)
 }
